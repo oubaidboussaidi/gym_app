@@ -1,23 +1,38 @@
 class Program {
   final String id;
-  final String title;
-  final String description;
+  final String titre;
+  final String niveau;
+  final Map<String, dynamic> coach;
+  final List<Map<String, dynamic>> exercices;
 
-  Program({required this.id, required this.title, required this.description});
+  Program({
+    required this.id,
+    required this.titre,
+    required this.niveau,
+    required this.coach,
+    required this.exercices,
+  });
 
   factory Program.fromJson(Map<String, dynamic> json) {
     return Program(
       id: json['_id'] ?? json['id'] ?? '',
-      title: json['title'] ?? json['name'] ?? '',
-      description: json['description'] ?? '',
+      titre: json['titre'] ?? '',
+      niveau: json['niveau'] ?? '',
+      coach: json['coach'] ?? {},
+      exercices: (json['exercices'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          [],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
-      'title': title,
-      'description': description,
+      'titre': titre,
+      'niveau': niveau,
+      'coach': coach,
+      'exercices': exercices,
     };
   }
 }
