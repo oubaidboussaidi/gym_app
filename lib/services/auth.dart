@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
 /// Throw this when auth fails
 class AuthException implements Exception {
@@ -23,7 +24,15 @@ class AuthService {
   String? get username => _username;
   bool get isLoggedIn => _token != null;
 
-  final String baseUrl = "http://10.0.2.2:3000"; // emulator-friendly localhost
+  // Dynamic base URL based on platform
+  String get baseUrl {
+    if (kIsWeb) return "http://localhost:3000";
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return "http://10.0.2.2:3000"; // Android Emulator
+    }
+    // iOS Simulator, macOS, Windows, etc.
+    return "http://localhost:3000";
+  }
 
   /// Login
   Future<void> login(String email, String password) async {
@@ -40,14 +49,19 @@ class AuthService {
 
       if (res.statusCode == 200 && body["token"] != null) {
         _token = body["token"];
-        _username = body["username"]; // get username from backend
+        // Extract username from nested "user" object or fallback to root (backward compatibility)
+        if (body["user"] != null && body["user"]["username"] != null) {
+           _username = body["user"]["username"];
+        } else {
+           _username = body["username"]; 
+        }
         return;
       }
 
       throw AuthException(body["message"] ?? "Login failed");
     } catch (e) {
       if (e is AuthException) rethrow;
-      throw AuthException("Network error or invalid response");
+      throw AuthException("Network error or invalid response: $e");
     }
   }
 
@@ -76,7 +90,7 @@ class AuthService {
       throw AuthException(body["message"] ?? "Registration failed");
     } catch (e) {
       if (e is AuthException) rethrow;
-      throw AuthException("Network error or invalid response");
+      throw AuthException("Network error or invalid response: $e");
     }
   }
 
