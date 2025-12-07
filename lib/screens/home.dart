@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gym_app/screens/programs_screen.dart';
+import 'package:gym_app/screens/progress_screen.dart';
 import 'package:gym_app/services/auth.dart';
 
 class Home extends StatelessWidget {
@@ -56,25 +58,32 @@ class Home extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.black54),
             ),
             const SizedBox(height: 30),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: Navigate to workouts page
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgramsScreen()));
                   },
-                  icon: const Icon(Icons.run_circle),
-                  label: const Text('Workouts'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87),
+                  icon: const Icon(Icons.run_circle, color: Colors.white),
+                  label: const Text('Workouts', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black87,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
                 ),
                 const SizedBox(width: 20),
                 ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: Navigate to progress page
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgressScreen()));
                   },
-                  icon: const Icon(Icons.show_chart),
-                  label: const Text('Progress'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87),
+                  icon: const Icon(Icons.show_chart, color: Colors.white),
+                  label: const Text('Progress', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black87,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
                 ),
               ],
             ),
