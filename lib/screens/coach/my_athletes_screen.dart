@@ -3,6 +3,7 @@ import 'package:gym_app/models/user.dart';
 import 'package:gym_app/services/user_service.dart';
 import 'package:gym_app/services/auth.dart';
 import 'package:gym_app/service_locator.dart';
+import 'package:gym_app/screens/coach/athlete_progress_screen.dart';
 
 class MyAthletesScreen extends StatefulWidget {
   const MyAthletesScreen({super.key});
@@ -71,7 +72,7 @@ class _MyAthletesScreenState extends State<MyAthletesScreen> {
                             trailing: IconButton(
                               icon: const Icon(Icons.arrow_forward),
                               onPressed: () {
-                                // Navigate to athlete details / progress
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => AthleteProgressScreen(athlete: user)));
                               },
                             ),
                           ),
