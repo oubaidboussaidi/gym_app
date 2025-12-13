@@ -1,16 +1,58 @@
-# gym_app
+# Gym App (Flutter + Node.js)
 
-A new Flutter project.
+A complete Gym Management System featuring Role-Based Access Control (RBAC), Program Building, and Workout Tracking.
 
-## Getting Started
+## 🚀 Features
+- **Admin**: Manage users and assign roles.
+- **Coach**: Create complex workout programs (Weeks/Days) and assign them to athletes.
+- **User**: View assigned programs and log workout sessions (Sets, Reps, RPE).
 
-This project is a starting point for a Flutter application.
+## 📂 Project Structure
+- `gym-backend/`: Node.js, Express, Mongoose backend.
+- `gym_app-master/`: Flutter mobile application.
+- `db/`: Seed data for the database.
 
-A few resources to get you started if this is your first Flutter project:
+## 🔑 Default Credentials
+**Global Password:** `password123`
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+| Role | Email | Name | Description |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@gym.com` | Admin User | Full system access. |
+| **Coach** | `coach@gym.com` | Coach Carter | Can create programs & view athlete logs. |
+| **User** | `user@gym.com` | John Doe | Assigned to Coach Carter. |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠️ Setup Instructions
+
+### 1. Backend
+1. Navigate to `gym-backend`:
+   ```bash
+   cd gym-backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the server (runs on port 3000):
+   ```bash
+   npm run dev
+   ```
+
+### 2. Frontend (Flutter)
+1. Navigate to `gym_app-master`:
+   ```bash
+   cd gym_app-master
+   ```
+2. Get packages:
+   ```bash
+   flutter pub get
+   ```
+3. Run the app:
+   ```bash
+   flutter run
+   ```
+
+## 📝 Tech Stack
+- **Frontend**: Flutter, Provider
+- **Backend**: Node.js, Express.js, TypeScript
+- **Database**: MongoDB (Mongoose)
+- **Auth**: JWT (JSON Web Tokens)
