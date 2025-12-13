@@ -1,38 +1,25 @@
 class Program {
   final String id;
-  final String titre;
-  final String niveau;
-  final Map<String, dynamic> coach;
-  final List<Map<String, dynamic>> exercices;
+  final String title;
+  final String description;
+  final String level;
+  final Map<String, dynamic> structure; // Nested structure
 
   Program({
     required this.id,
-    required this.titre,
-    required this.niveau,
-    required this.coach,
-    required this.exercices,
+    required this.title,
+    required this.description,
+    required this.level,
+    this.structure = const {},
   });
 
   factory Program.fromJson(Map<String, dynamic> json) {
     return Program(
       id: json['_id'] ?? json['id'] ?? '',
-      titre: json['titre'] ?? '',
-      niveau: json['niveau'] ?? '',
-      coach: json['coach'] ?? {},
-      exercices: (json['exercices'] as List<dynamic>?)
-              ?.map((e) => e as Map<String, dynamic>)
-              .toList() ??
-          [],
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      level: json['level'] ?? 'beginner',
+      structure: json['structure'] ?? {},
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'titre': titre,
-      'niveau': niveau,
-      'coach': coach,
-      'exercices': exercices,
-    };
   }
 }

@@ -19,9 +19,13 @@ class AuthService {
 
   String? _token;
   String? _username;
+  String? _userId;
+  String? _role;
 
   String? get token => _token;
   String? get username => _username;
+  String? get userId => _userId;
+  String? get role => _role;
   bool get isLoggedIn => _token != null;
 
   // Dynamic base URL based on platform
@@ -49,10 +53,21 @@ class AuthService {
 
       if (res.statusCode == 200 && body["token"] != null) {
         _token = body["token"];
-        // Extract username from nested "user" object or fallback to root (backward compatibility)
-        if (body["user"] != null && body["user"]["username"] != null) {
-           _username = body["user"]["username"];
-        } else {
+        
+        // Handle new backend structure
+        if (body["user"] != null) {
+          _role = body["user"]["role"];
+          _userId = body["user"]["id"] ?? body["user"]["_id"]; // Store ID
+          _username = body["user"]["email"]; 
+          if (body["user"]["profile"] != null) {
+             if (body["user"]["profile"]["firstName"] != null && body["user"]["profile"]["firstName"].toString().isNotEmpty) {
+               _username = body["user"]["profile"]["firstName"];
+             }
+          }
+        } 
+        // Fallback for any legacy response
+        else {
+           _role = "user";
            _username = body["username"]; 
         }
         return;

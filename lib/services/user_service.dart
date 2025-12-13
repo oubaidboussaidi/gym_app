@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:gym_app/models/program.dart';
 import 'package:gym_app/models/workout_log.dart';
+import 'package:gym_app/models/user.dart';
 import 'package:gym_app/services/auth.dart';
 
 class UserService {
@@ -15,14 +15,13 @@ class UserService {
     try {
       final res = await http.get(url, headers: {
         "Content-Type": "application/json",
-        // "Authorization": "Bearer ${_auth.token}" // Uncomment if protected
       });
 
       if (res.statusCode == 200) {
         final List<dynamic> body = jsonDecode(res.body);
         return body.map((e) => Program.fromJson(e)).toList();
       } else {
-        throw Exception("Failed to load programs");
+        throw Exception("Failed to load programs: ${res.statusCode}");
       }
     } catch (e) {
       throw Exception("Error fetching programs: $e");
@@ -57,7 +56,6 @@ class UserService {
     }
   }
 
-  // Allow passing current stats to update
   Future<void> updateProgress(String userId, Map<String, dynamic> progression) async {
     final url = Uri.parse("$baseUrl/users/$userId");
     try {
@@ -65,16 +63,60 @@ class UserService {
         url,
         headers: {
           "Content-Type": "application/json",
-          // "Authorization": "Bearer ${_auth.token}"
         },
         body: jsonEncode({"progression": progression}),
       );
 
-      if (res.statusCode != 200) {
-        throw Exception("Failed to update progress");
-      }
+      if (res.statusCode != 200) throw Exception("Failed to update progress");
     } catch (e) {
       throw Exception("Error updating progress: $e");
+    }
+  }
+
+  // --- Admin/Coach Methods ---
+
+  Future<List<User>> getAllUsers({String? coachId}) async {
+    final token = _auth.token;
+    if (token == null) throw Exception("Not authenticated");
+
+    var urlString = "$baseUrl/users";
+    if (coachId != null) {
+      urlString += "?coachId=$coachId";
+    }
+
+    final url = Uri.parse(urlString);
+    final res = await http.get(
+      url, 
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"
+      }
+    );
+
+    if (res.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(res.body);
+      return body.map((json) => User.fromJson(json)).toList();
+    } else {
+      throw Exception("Failed to load users: ${res.body}");
+    }
+  }
+
+  Future<void> updateUserRole(String userId, String newRole) async {
+    final token = _auth.token;
+    if (token == null) throw Exception("Not authenticated");
+
+    final url = Uri.parse("$baseUrl/users/$userId/role");
+    final res = await http.put(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"
+      },
+      body: jsonEncode({"role": newRole}),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to update role: ${res.body}");
     }
   }
 }

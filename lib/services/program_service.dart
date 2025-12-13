@@ -1,30 +1,54 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/program.dart';
+import 'package:gym_app/models/exercise.dart';
+import 'package:gym_app/models/program.dart';
+import 'package:gym_app/services/auth.dart';
 
 class ProgramService {
-  final String baseUrl = "http://10.0.2.2:3000";
+  final AuthService _auth = AuthService();
 
-  Future<List<Program>> getPrograms() async {
-    final response = await http.get(Uri.parse('$baseUrl/programs'));
-    if (response.statusCode == 200) {
-      final List<dynamic> body = jsonDecode(response.body);
-      return body.map((e) => Program.fromJson(e)).toList();
+  String get baseUrl => _auth.baseUrl;
+
+  // Fetch all exercises from library
+  Future<List<Exercise>> getExercises() async {
+    final token = _auth.token;
+    if (token == null) throw Exception("Not authenticated");
+
+    final url = Uri.parse("$baseUrl/exercises");
+    final res = await http.get(
+      url, 
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"
+      }
+    );
+
+    if (res.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(res.body);
+      return body.map((e) => Exercise.fromJson(e)).toList();
     } else {
-      throw Exception('Failed to load programs');
+      throw Exception("Failed to load exercises");
     }
   }
 
-  Future<Program> createProgram(Program program) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/programs'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(program.toJson()),
+  // Create a new Program (Complex)
+  // We accept a raw Map for now because the Program model logic might need updates to handle creation structure
+  Future<void> createProgram(Map<String, dynamic> programData) async {
+    final token = _auth.token;
+    if (token == null) throw Exception("Not authenticated");
+
+    final url = Uri.parse("$baseUrl/programs");
+    final res = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"
+      },
+      body: jsonEncode(programData),
     );
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return Program.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to create program');
+
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception("Failed to create program: ${res.body}");
     }
   }
 }

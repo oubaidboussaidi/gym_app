@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/service_locator.dart';
+import 'package:gym_app/services/auth.dart';
 import 'package:gym_app/view_models/login_model.dart';
 import 'package:gym_app/widgets/button.dart';
 import 'package:gym_app/widgets/textfield.dart';
@@ -81,7 +82,17 @@ class _LoginState extends State<Login> {
                   onTap: () async {
                     await vm.login(email.text, password.text);
                     if (vm.isLoggedIn.value && context.mounted) {
-                      Navigator.pushReplacementNamed(context, '/home');
+                      // Redirect based on role
+                      final authService = serviceLocator<AuthService>(); // Need to access role
+                      final role = authService.role;
+                      
+                      if (role == 'admin') {
+                        Navigator.pushReplacementNamed(context, '/admin');
+                      } else if (role == 'coach') {
+                        Navigator.pushReplacementNamed(context, '/coach');
+                      } else {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
                     }
                   },
                 );

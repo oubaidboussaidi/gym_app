@@ -1,122 +1,118 @@
 import 'package:flutter/material.dart';
-import 'package:gym_app/screens/programs_screen.dart';
-import 'package:gym_app/screens/progress_screen.dart';
 import 'package:gym_app/services/auth.dart';
+import 'package:gym_app/services/user_service.dart';
+import 'package:gym_app/services/assignment_service.dart';
+import 'package:gym_app/models/program_assignment.dart';
+import 'package:gym_app/screens/login.dart';
+import 'package:gym_app/screens/active_program_screen.dart';
+import 'package:gym_app/service_locator.dart';
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final auth = AuthService(); // Singleton instance
-    final username = auth.isLoggedIn ? auth.username ?? "Guest" : "Guest";
+  State<Home> createState() => _HomeState();
+}
 
+class _HomeState extends State<Home> {
+  final UserService _userService = UserService();
+  final AuthService _auth = serviceLocator<AuthService>(); 
+  final AssignmentService _assignmentService = AssignmentService(); // Assuming IoC later, direct for now
+
+  ProgramAssignment? _activeAssignment;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final assignment = await _assignmentService.getMyActiveAssignment();
+      setState(() {
+        _activeAssignment = assignment;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error loading home data: $e");
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _logout() async {
+    await _auth.logout();
+    if (mounted) {
+       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (r) => false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.grey.shade200,
-        elevation: 0,
-        title: Row(
-          children: [
-            const Icon(Icons.fitness_center, color: Colors.black87),
-            const SizedBox(width: 10),
-            const Text('Gym App', style: TextStyle(color: Colors.black87)),
-            const Spacer(),
-            Text(
-              username,
-              style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 10),
-            IconButton(
-              icon: const CircleAvatar(
-                backgroundColor: Colors.black87,
-                child: Icon(Icons.person, color: Colors.white),
-              ),
-              onPressed: () {
-                // Navigate to profile page (TODO)
-              },
-            ),
-          ],
-        ),
+        title: Text("Welcome, ${_auth.username ?? 'User'}"),
+        actions: [
+          IconButton(icon: const Icon(Icons.logout), onPressed: _logout)
+        ],
       ),
-      body: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        color: Colors.grey.shade100,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.fitness_center, size: 100, color: Colors.black87),
-            const SizedBox(height: 20),
-            Text(
-              'Welcome, $username!',
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Track your progress, log workouts, and stay motivated!',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.black54),
-            ),
-            const SizedBox(height: 30),
-            
-            // Abonnement Card
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [Colors.black87, Colors.grey.shade800]),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))],
-              ),
-              child: const Row(
-                children: [
-                   Icon(Icons.card_membership, color: Colors.amber, size: 40),
-                   SizedBox(width: 20),
-                   Column(
-                     crossAxisAlignment: CrossAxisAlignment.start,
-                     children: [
-                       Text("MEMBERSHIP", style: TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 1.5)),
-                       Text("Gold Access", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                       Text("Valid until Dec 2025", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                     ],
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Active Program Card
+              if (_activeAssignment != null)
+                Card(
+                  color: Colors.blueAccent,
+                  child: InkWell(
+                    onTap: () {
+                       Navigator.push(context, MaterialPageRoute(builder: (_) => ActiveProgramScreen(assignment: _activeAssignment!)));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Current Program", style: TextStyle(color: Colors.white70)),
+                          const SizedBox(height: 5),
+                          Text(
+                            _activeAssignment!.program?.title ?? "Untitled Program",
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          const SizedBox(height: 10),
+                          const Row(
+                            children: [
+                              Text("Tap to view details", style: TextStyle(color: Colors.white)),
+                              Spacer(),
+                              Icon(Icons.arrow_forward, color: Colors.white)
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else
+                 const Card(
+                   child: Padding(
+                     padding: EdgeInsets.all(20),
+                     child: Text("No active program assigned. Ask your coach!"),
                    ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 30),
+                 ),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgramsScreen()));
-                  },
-                  icon: const Icon(Icons.run_circle, color: Colors.white),
-                  label: const Text('Workouts', style: TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ProgressScreen()));
-                  },
-                  icon: const Icon(Icons.show_chart, color: Colors.white),
-                  label: const Text('Progress', style: TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 20),
+              
+              // Recent Logs (Placeholder for now)
+              const Text("Recent Activity", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const ListTile(
+                leading: Icon(Icons.history),
+                title: Text("No recent logs"),
+              )
+            ],
+          ),
     );
   }
 }

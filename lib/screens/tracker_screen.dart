@@ -1,158 +1,189 @@
 import 'package:flutter/material.dart';
-import 'package:gym_app/models/program.dart';
-import 'package:gym_app/models/workout_log.dart';
+import 'package:gym_app/models/workout_session.dart';
+import 'package:gym_app/services/workout_service.dart';
 import 'package:gym_app/services/auth.dart';
-import 'package:gym_app/services/user_service.dart';
+import 'package:gym_app/service_locator.dart';
 
 class TrackerScreen extends StatefulWidget {
-  final Program program;
-  const TrackerScreen({super.key, required this.program});
+  final Map<String, dynamic> dayStructure;
+  final String assignmentId;
+  final int weekNumber;
+  final int dayNumber;
+
+  const TrackerScreen({
+    super.key, 
+    required this.dayStructure, 
+    required this.assignmentId,
+    required this.weekNumber,
+    required this.dayNumber,
+  });
 
   @override
   State<TrackerScreen> createState() => _TrackerScreenState();
 }
 
 class _TrackerScreenState extends State<TrackerScreen> {
-  final UserService _userService = UserService();
-  final AuthService _auth = AuthService();
+  final AuthService _auth = serviceLocator<AuthService>();
+  final WorkoutService _workoutService = WorkoutService();
   
-  late List<LoggedExercise> _exercises;
-  bool _isSaving = false;
+  // State: Map of Exercise Index -> List of SetLogs
+  // We initialize this from the target structure (if we want pre-fill)
+  final Map<int, List<SetLog>> _logs = {}; 
 
   @override
   void initState() {
     super.initState();
-    // Initialize log with program defaults
-    _exercises = widget.program.exercices.map((ex) {
-      return LoggedExercise(
-        name: ex['nom'] ?? 'Unnamed',
-        weight: 0.0,
-        reps: ex['reps'] as int? ?? 0,
-        sets: ex['séries'] as int? ?? 0,
-      );
-    }).toList();
+    // Initialize logs structure based on targets
+    final exercises = (widget.dayStructure['exercises'] as List<dynamic>?) ?? [];
+    for (int i = 0; i < exercises.length; i++) {
+       _logs[i] = [];
+       // Optionally pre-fill with defaults based on targetSets? 
+       // For now start empty.
+    }
+  }
+
+  void _addSet(int exerciseIndex) {
+    setState(() {
+      _logs[exerciseIndex]!.add(SetLog(
+        setNumber: _logs[exerciseIndex]!.length + 1,
+        weight: 0,
+        reps: 0,
+        rpe: 0
+      ));
+    });
   }
 
   Future<void> _finishWorkout() async {
-    setState(() => _isSaving = true);
+    // Validate?
+    // Construct Session
+    final exercises = (widget.dayStructure['exercises'] as List<dynamic>?) ?? [];
+    List<ExerciseLog> exerciseLogs = [];
+
+    _logs.forEach((index, sets) {
+       if (index < exercises.length) {
+         final exData = exercises[index];
+         exerciseLogs.add(ExerciseLog(
+           exerciseId: exData['exerciseId'] ?? '', // Assuming ID is stored in structure
+           name: exData['name'] ?? 'Unknown',
+           sets: sets
+         ));
+       }
+    });
+
+    final session = WorkoutSession(
+      userId: _auth.userId ?? '',
+      assignmentId: widget.assignmentId,
+      weekNumber: widget.weekNumber,
+      dayNumber: widget.dayNumber,
+      durationMinutes: 60, // Mock duration
+      logs: exerciseLogs,
+      userFeedback: "Great workout",
+      userRPE: 8
+    );
+
     try {
-      final log = WorkoutLog(
-        id: '', // Backend generates
-        userId: _auth.username ?? 'guest', // Using username as ID for prototype simplicity
-        programId: widget.program.id,
-        programTitle: widget.program.titre,
-        date: DateTime.now(),
-        exercises: _exercises,
-      );
-
-      await _userService.saveLog(log);
-
+      await _workoutService.saveSession(session);
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Workout Saved! Great job!")),
-        );
+         Navigator.pop(context);
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Workout Saved!")));
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error saving: $e")),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final exercises = (widget.dayStructure['exercises'] as List<dynamic>?) ?? [];
+
     return Scaffold(
-      appBar: AppBar(title: Text("Track: ${widget.program.titre}")),
+      appBar: AppBar(title: Text("Log: ${widget.dayStructure['name']}")),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _exercises.length,
+        itemCount: exercises.length + 1,
         itemBuilder: (context, index) {
-          final ex = _exercises[index];
+          if (index == exercises.length) {
+             return Padding(
+               padding: const EdgeInsets.only(top: 20),
+               child: ElevatedButton(
+                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.all(16)),
+                 onPressed: _finishWorkout, 
+                 child: const Text("FINISH WORKOUT", style: TextStyle(fontSize: 18))
+               ),
+             );
+          }
+
+          final ex = exercises[index];
+          final currentSets = _logs[index] ?? [];
+
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Text(ex.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                   const SizedBox(height: 10),
-                   Row(
-                     children: [
-                       Expanded(
-                         child: TextFormField(
-                           initialValue: ex.weight.toString(),
-                           keyboardType: TextInputType.number,
-                           decoration: const InputDecoration(labelText: "Weight (kg)"),
-                           onChanged: (val) {
-                             // Create new object to update state (immutable style safer)
-                             _exercises[index] = LoggedExercise(
-                               name: ex.name,
-                               weight: double.tryParse(val) ?? ex.weight,
-                               reps: ex.reps,
-                               sets: ex.sets,
-                             );
-                           },
-                         ),
-                       ),
-                       const SizedBox(width: 16),
-                       Expanded(
-                         child: TextFormField(
-                           initialValue: ex.reps.toString(),
-                           keyboardType: TextInputType.number,
-                           decoration: const InputDecoration(labelText: "Reps"),
-                            onChanged: (val) {
-                             _exercises[index] = LoggedExercise(
-                               name: ex.name,
-                               weight: ex.weight,
-                               reps: int.tryParse(val) ?? ex.reps,
-                               sets: ex.sets,
-                             );
-                           },
-                         ),
-                       ),
-                       const SizedBox(width: 16),
-                       Expanded(
-                         child: TextFormField(
-                           initialValue: ex.sets.toString(),
-                           keyboardType: TextInputType.number,
-                           decoration: const InputDecoration(labelText: "Sets"),
-                            onChanged: (val) {
-                             _exercises[index] = LoggedExercise(
-                               name: ex.name,
-                               weight: ex.weight,
-                               reps: ex.reps,
-                               sets: int.tryParse(val) ?? ex.sets,
-                             );
-                           },
-                         ),
-                       ),
-                     ],
+             margin: const EdgeInsets.only(bottom: 16),
+             child: Padding(
+               padding: const EdgeInsets.all(12),
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   Text(ex['name'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                   const SizedBox(height: 5),
+                   Text("Target: ${ex['targetSets']} x ${ex['targetReps']}", style: const TextStyle(color: Colors.grey)),
+                   const Divider(),
+                   ...currentSets.map((set) => ListTile(
+                     dense: true,
+                     title: Text("Set ${set.setNumber}: ${set.weight}kg x ${set.reps}"),
+                     trailing: const Icon(Icons.check_circle, color: Colors.green),
+                   )),
+                   TextButton(
+                     onPressed: () {
+                        // Show dialog to add set
+                        _showAddSetDialog(index);
+                     },
+                     child: const Text("+ Log Set"),
                    )
-                ],
-              ),
-            ),
+                 ],
+               ),
+             ),
           );
         },
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed: _isSaving ? null : _finishWorkout,
-           style: ElevatedButton.styleFrom(
-             padding: const EdgeInsets.all(16),
-             backgroundColor: Colors.green,
-           ),
-          child: _isSaving 
-             ? const CircularProgressIndicator(color: Colors.white) 
-             : const Text("FINISH WORKOUT", style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
-        ),
-      ),
     );
+  }
+
+  void _showAddSetDialog(int index) {
+     final weightCtrl = TextEditingController();
+     final repsCtrl = TextEditingController();
+     final rpeCtrl = TextEditingController();
+
+     showDialog(
+       context: context,
+       builder: (_) => AlertDialog(
+         title: const Text("Log Set"),
+         content: Column(
+           mainAxisSize: MainAxisSize.min,
+           children: [
+             TextField(controller: weightCtrl, decoration: const InputDecoration(labelText: "Weight (kg)"), keyboardType: TextInputType.number),
+             TextField(controller: repsCtrl, decoration: const InputDecoration(labelText: "Reps"), keyboardType: TextInputType.number),
+             TextField(controller: rpeCtrl, decoration: const InputDecoration(labelText: "RPE (1-10)"), keyboardType: TextInputType.number),
+           ],
+         ),
+         actions: [
+           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+           TextButton(onPressed: () {
+              final w = double.tryParse(weightCtrl.text) ?? 0;
+              final r = int.tryParse(repsCtrl.text) ?? 0;
+              final rpe = int.tryParse(rpeCtrl.text) ?? 0;
+              
+              setState(() {
+                 _logs[index]!.add(SetLog(
+                   setNumber: _logs[index]!.length + 1,
+                   weight: w,
+                   reps: r,
+                   rpe: rpe
+                 ));
+              });
+              Navigator.pop(context);
+           }, child: const Text("Save")),
+         ],
+       )
+     );
   }
 }

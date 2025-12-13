@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:gym_app/screens/admin_dashboard.dart';
+import 'package:gym_app/screens/coach_dashboard.dart';
 import 'package:gym_app/screens/home.dart';
 import 'package:gym_app/screens/login.dart';
 import 'package:gym_app/screens/register.dart';
@@ -39,11 +40,14 @@ class MyApp extends StatelessWidget {
               themeMode: themeService.isDarkMode
                   ? ThemeMode.dark
                   : ThemeMode.light,
-              home: authVM.isLoggedIn.value ? Home() : Login(),
+              // TODO: Ideally check role here too for persistent login redirect
+              home: authVM.isLoggedIn.value ? const Home() : const Login(),
               routes: {
-                '/login': (_) => Login(),
-                '/register': (_) => Register(),
-                '/home': (_) => Home(),
+                '/login': (_) => const Login(),
+                '/register': (_) => const Register(),
+                '/home': (_) => const Home(),
+                '/admin': (_) => const AdminDashboard(),
+                '/coach': (_) => const CoachDashboard(),
               },
             );
           },
