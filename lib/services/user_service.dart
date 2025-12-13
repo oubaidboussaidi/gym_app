@@ -107,4 +107,33 @@ class UserService {
       throw Exception("Failed to update role: ${res.body}");
     }
   }
+
+  Future<void> deleteUser(String userId) async {
+    final token = _auth.token;
+    if (token == null) throw Exception("Not authenticated");
+
+    final url = Uri.parse("$baseUrl/users/$userId");
+    final res = await http.delete(
+      url,
+      headers: {
+        "Authorization": "Bearer $token"
+      },
+    );
+
+    if (res.statusCode != 204) {
+      throw Exception("Failed to delete user: ${res.body}");
+    }
+  }
+
+  Future<void> createUser(String email, String password, String name) async {
+    final url = Uri.parse("$baseUrl/auth/register");
+    final res = await http.post(url, headers: {"Content-Type": "application/json"}, body: jsonEncode({
+        "email": email,
+        "password": password,
+        "firstName": name,
+        "role": "user"
+    }));
+
+    if (res.statusCode != 201) throw Exception("Failed to create user: ${res.body}");
+  }
 }

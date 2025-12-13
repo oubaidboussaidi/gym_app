@@ -55,10 +55,78 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     }
   }
 
+  Future<void> _deleteUser(String userId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Confirm Delete"),
+        content: const Text("Are you sure you want to delete this user?"),
+        actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("No")),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Yes", style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+        try {
+            await _userService.deleteUser(userId);
+            _loadUsers();
+        } catch (e) {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Delete failed: $e")));
+        }
+    }
+  }
+
+  void _showCreateUserDialog() {
+    final emailCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Create User"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: "Name")),
+            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: "Email")),
+            TextField(controller: passCtrl, decoration: const InputDecoration(labelText: "Password"), obscureText: true),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                // Manually calling register via AuthService instance but ignoring local login effect if needed
+                // Actually AuthService.register updates local state. 
+                // Creating a simplified register call here is safer.
+                await UserService().createUser(emailCtrl.text, passCtrl.text, nameCtrl.text); // Need to add createUser to UserService!
+                if (mounted) {
+                   Navigator.pop(context);
+                   _loadUsers();
+                }
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed: $e")));
+              }
+            }, 
+            child: const Text("Create")
+          ),
+        ],
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("User Management")),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showCreateUserDialog,
+        child: const Icon(Icons.add),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -76,9 +144,18 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         ),
                         title: Text(user.email),
                         subtitle: Text("Role: ${user.role.toUpperCase()} | Name: ${user.firstName}"),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _changeRole(user),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () => _changeRole(user),
+                            ),
+                            IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteUser(user.id),
+                            ),
+                          ],
                         ),
                       ),
                     );

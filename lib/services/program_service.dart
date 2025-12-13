@@ -9,12 +9,16 @@ class ProgramService {
 
   String get baseUrl => _auth.baseUrl;
 
-  // Fetch all exercises from library
-  Future<List<Exercise>> getExercises() async {
+  // Fetch all programs (Admin/Coach view)
+  Future<List<Program>> getPrograms({String? coachId, bool publicOnly = false}) async {
     final token = _auth.token;
     if (token == null) throw Exception("Not authenticated");
 
-    final url = Uri.parse("$baseUrl/exercises");
+    var query = "";
+    if (coachId != null) query = "?coachId=$coachId";
+    if (publicOnly) query += (query.isEmpty ? "?" : "&") + "public=true";
+
+    final url = Uri.parse("$baseUrl/programs$query");
     final res = await http.get(
       url, 
       headers: {
@@ -25,14 +29,12 @@ class ProgramService {
 
     if (res.statusCode == 200) {
       final List<dynamic> body = jsonDecode(res.body);
-      return body.map((e) => Exercise.fromJson(e)).toList();
+      return body.map((e) => Program.fromJson(e)).toList();
     } else {
-      throw Exception("Failed to load exercises");
+      throw Exception("Failed to load programs");
     }
   }
 
-  // Create a new Program (Complex)
-  // We accept a raw Map for now because the Program model logic might need updates to handle creation structure
   Future<void> createProgram(Map<String, dynamic> programData) async {
     final token = _auth.token;
     if (token == null) throw Exception("Not authenticated");
@@ -50,5 +52,18 @@ class ProgramService {
     if (res.statusCode != 200 && res.statusCode != 201) {
       throw Exception("Failed to create program: ${res.body}");
     }
+  }
+
+  Future<void> deleteProgram(String id) async {
+    final token = _auth.token;
+    if (token == null) throw Exception("Not authenticated");
+
+    final url = Uri.parse("$baseUrl/programs/$id");
+    final res = await http.delete(
+      url,
+      headers: { "Authorization": "Bearer $token" },
+    );
+
+    if (res.statusCode != 204) throw Exception("Failed to delete program");
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/models/exercise.dart';
 import 'package:gym_app/services/program_service.dart';
+import 'package:gym_app/services/exercise_service.dart';
 import 'package:gym_app/widgets/button.dart';
 import 'package:gym_app/widgets/textfield.dart';
 
@@ -13,6 +14,7 @@ class ProgramBuilderScreen extends StatefulWidget {
 
 class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   final ProgramService _programService = ProgramService();
+  final ExerciseService _exerciseService = ExerciseService(); // Add service
   final TextEditingController _title = TextEditingController();
   final TextEditingController _desc = TextEditingController();
   String _level = "beginner";
@@ -32,7 +34,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
   Future<void> _loadExercises() async {
     try {
-      final exs = await _programService.getExercises();
+      final exs = await _exerciseService.getExercises(); // Use ExerciseService
       setState(() { _availableExercises = exs; });
     } catch (e) {
       print("Error loading exercises: $e");

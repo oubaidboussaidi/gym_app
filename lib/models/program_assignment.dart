@@ -13,7 +13,12 @@ class ProgramAssignment {
     required this.programId,
     required this.status,
     this.program,
+    this.currentWeek = 1,
+    this.currentDay = 1,
   });
+
+  final int currentWeek;
+  final int currentDay;
 
   factory ProgramAssignment.fromJson(Map<String, dynamic> json) {
     Program? prog;
@@ -27,6 +32,8 @@ class ProgramAssignment {
       programId: json['programId'] is String ? json['programId'] : (json['programId']['_id'] ?? ''),
       status: json['status'] ?? 'active',
       program: prog,
+      currentWeek: json['currentWeek'] ?? 1,
+      currentDay: json['currentDay'] ?? 1,
     );
   }
 }

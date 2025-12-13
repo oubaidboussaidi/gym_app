@@ -4,6 +4,7 @@ import 'package:gym_app/services/user_service.dart';
 import 'package:gym_app/services/auth.dart';
 import 'package:gym_app/service_locator.dart';
 import 'package:gym_app/screens/coach/athlete_progress_screen.dart';
+import 'package:gym_app/screens/coach/assign_program_screen.dart';
 
 class MyAthletesScreen extends StatefulWidget {
   const MyAthletesScreen({super.key});
@@ -69,11 +70,24 @@ class _MyAthletesScreenState extends State<MyAthletesScreen> {
                             leading: const CircleAvatar(child: Icon(Icons.person)),
                             title: Text(user.firstName.isEmpty ? user.email : "${user.firstName} ${user.lastName}"),
                             subtitle: const Text("Status: Active"), 
-                            trailing: IconButton(
-                              icon: const Icon(Icons.arrow_forward),
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => AthleteProgressScreen(athlete: user)));
-                              },
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.playlist_add, color: Colors.blue),
+                                  tooltip: "Assign Program",
+                                  onPressed: () {
+                                     Navigator.push(context, MaterialPageRoute(builder: (_) => AssignProgramScreen(athlete: user)));
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.arrow_forward),
+                                  tooltip: "View Progress",
+                                  onPressed: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => AthleteProgressScreen(athlete: user)));
+                                  },
+                                ),
+                              ],
                             ),
                           ),
                         );

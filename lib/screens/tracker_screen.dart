@@ -95,6 +95,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
   @override
   Widget build(BuildContext context) {
     final exercises = (widget.dayStructure['exercises'] as List<dynamic>?) ?? [];
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(title: Text("Log: ${widget.dayStructure['name']}")),
@@ -106,9 +107,12 @@ class _TrackerScreenState extends State<TrackerScreen> {
              return Padding(
                padding: const EdgeInsets.only(top: 20),
                child: ElevatedButton(
-                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.all(16)),
+                 style: ElevatedButton.styleFrom(
+                   backgroundColor: theme.colorScheme.primary, 
+                   padding: const EdgeInsets.all(16)
+                 ),
                  onPressed: _finishWorkout, 
-                 child: const Text("FINISH WORKOUT", style: TextStyle(fontSize: 18))
+                 child: const Text("FINISH WORKOUT", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))
                ),
              );
           }
@@ -118,26 +122,29 @@ class _TrackerScreenState extends State<TrackerScreen> {
 
           return Card(
              margin: const EdgeInsets.only(bottom: 16),
+             color: theme.cardTheme.color,
              child: Padding(
-               padding: const EdgeInsets.all(12),
+               padding: const EdgeInsets.all(16),
                child: Column(
                  crossAxisAlignment: CrossAxisAlignment.start,
                  children: [
-                   Text(ex['name'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                   Text(ex['name'], style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                    const SizedBox(height: 5),
-                   Text("Target: ${ex['targetSets']} x ${ex['targetReps']}", style: const TextStyle(color: Colors.grey)),
-                   const Divider(),
+                   Text("Target: ${ex['targetSets']} x ${ex['targetReps']}", style: TextStyle(color: Colors.grey[400])),
+                   const Divider(color: Colors.white24),
                    ...currentSets.map((set) => ListTile(
                      dense: true,
-                     title: Text("Set ${set.setNumber}: ${set.weight}kg x ${set.reps}"),
-                     trailing: const Icon(Icons.check_circle, color: Colors.green),
+                     contentPadding: EdgeInsets.zero,
+                     title: Text("Set ${set.setNumber}: ${set.weight}kg x ${set.reps}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                     trailing: Icon(Icons.check_circle, color: theme.colorScheme.primary),
                    )),
-                   TextButton(
-                     onPressed: () {
-                        // Show dialog to add set
-                        _showAddSetDialog(index);
-                     },
-                     child: const Text("+ Log Set"),
+                   Align(
+                     alignment: Alignment.centerRight,
+                     child: TextButton.icon(
+                       onPressed: () => _showAddSetDialog(index),
+                       icon: const Icon(Icons.add),
+                       label: const Text("Log Set"),
+                     ),
                    )
                  ],
                ),
