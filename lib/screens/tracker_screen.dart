@@ -64,7 +64,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
          final exData = exercises[index];
          exerciseLogs.add(ExerciseLog(
            exerciseId: exData['exerciseId'] ?? '', // Assuming ID is stored in structure
-           name: exData['name'] ?? 'Unknown',
+           name: exData['name']?.toString() ?? 'Unknown',
            sets: sets
          ));
        }
@@ -128,9 +128,9 @@ class _TrackerScreenState extends State<TrackerScreen> {
                child: Column(
                  crossAxisAlignment: CrossAxisAlignment.start,
                  children: [
-                   Text(ex['name'], style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                   Text(ex['name']?.toString() ?? 'Unknown Exercise', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                    const SizedBox(height: 5),
-                   Text("Target: ${ex['targetSets']} x ${ex['targetReps']}", style: TextStyle(color: Colors.grey[400])),
+                   Text("Target: ${ex['targetSets'] ?? 0} x ${ex['targetReps'] ?? 'N/A'}", style: TextStyle(color: Colors.grey[400])),
                    const Divider(color: Colors.white24),
                    ...currentSets.map((set) => ListTile(
                      dense: true,

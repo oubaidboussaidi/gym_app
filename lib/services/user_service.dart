@@ -11,10 +11,12 @@ class UserService {
   String get baseUrl => _auth.baseUrl;
 
   Future<List<Program>> getPrograms() async {
+    final token = _auth.token;
     final url = Uri.parse("$baseUrl/programs");
     try {
       final res = await http.get(url, headers: {
         "Content-Type": "application/json",
+        if (token != null) "Authorization": "Bearer $token", 
       });
 
       if (res.statusCode == 200) {
@@ -29,12 +31,16 @@ class UserService {
   }
 
   Future<List<WorkoutSession>> getLogs(String userId) async {
+    final token = _auth.token;
     final url = Uri.parse("$baseUrl/logs/$userId");
     try {
-      final res = await http.get(url, headers: {"Content-Type": "application/json"});
+      final res = await http.get(url, headers: {
+        "Content-Type": "application/json",
+        if (token != null) "Authorization": "Bearer $token",
+      });
       if (res.statusCode == 200) {
         final List<dynamic> body = jsonDecode(res.body);
-        return body.map((e) => WorkoutSession.fromJson(e)).toList(); // Requires fromJson in WorkoutSession
+        return body.map((e) => WorkoutSession.fromJson(e)).toList(); 
       }
       return [];
     } catch (e) {
@@ -45,12 +51,14 @@ class UserService {
   // Legacy saveLog removed. Use WorkoutService.
 
   Future<void> updateProgress(String userId, Map<String, dynamic> progression) async {
+    final token = _auth.token;
     final url = Uri.parse("$baseUrl/users/$userId");
     try {
       final res = await http.put(
         url,
         headers: {
           "Content-Type": "application/json",
+          if (token != null) "Authorization": "Bearer $token",
         },
         body: jsonEncode({"progression": progression}),
       );
