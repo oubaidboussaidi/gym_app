@@ -42,8 +42,8 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void _logout() async {
-    await _auth.logout();
+  void _logout() {
+    _auth.logout();
     if (mounted) {
        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (r) => false);
     }

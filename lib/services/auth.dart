@@ -41,6 +41,7 @@ class AuthService {
   /// Login
   Future<void> login(String email, String password) async {
     final url = Uri.parse("$baseUrl/auth/login");
+    debugPrint("AuthService: Logging in at $url");
 
     try {
       final res = await http.post(
@@ -48,6 +49,8 @@ class AuthService {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "password": password}),
       );
+      
+      debugPrint("AuthService: Login response ${res.statusCode} ${res.body}");
 
       final body = jsonDecode(res.body);
 
@@ -73,8 +76,9 @@ class AuthService {
         return;
       }
 
-      throw AuthException(body["message"] ?? "Login failed");
+      throw AuthException(body["message"] ?? body["error"] ?? "Login failed");
     } catch (e) {
+      debugPrint("AuthService: Login error $e");
       if (e is AuthException) rethrow;
       throw AuthException("Network error or invalid response: $e");
     }
@@ -83,6 +87,7 @@ class AuthService {
   /// Register
   Future<void> register(String email, String password, String username) async {
     final url = Uri.parse("$baseUrl/auth/register");
+    debugPrint("AuthService: Registering at $url");
 
     try {
       final res = await http.post(
@@ -91,19 +96,24 @@ class AuthService {
         body: jsonEncode({
           "email": email,
           "password": password,
-          "username": username,
+          "firstName": username, // Map username to firstName
+          "lastName": "",        // Optional
+          "role": "user"         // Default role
         }),
       );
+
+      debugPrint("AuthService: Register response ${res.statusCode} ${res.body}");
 
       final body = jsonDecode(res.body);
 
       if (res.statusCode == 201) {
-        _username = username; // optionally store username after register
+        _username = username; 
         return;
       }
 
       throw AuthException(body["message"] ?? "Registration failed");
     } catch (e) {
+      debugPrint("AuthService: Register error $e");
       if (e is AuthException) rethrow;
       throw AuthException("Network error or invalid response: $e");
     }

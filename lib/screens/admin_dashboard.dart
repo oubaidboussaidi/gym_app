@@ -13,8 +13,8 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   final AuthService _auth = AuthService();
 
-  void _logout() async {
-    await _auth.logout();
+  void _logout() {
+    _auth.logout();
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,

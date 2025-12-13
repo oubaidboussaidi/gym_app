@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:gym_app/models/workout_log.dart';
+import 'package:gym_app/models/workout_session.dart';
 import 'package:gym_app/services/auth.dart';
 import 'package:gym_app/services/user_service.dart';
 
@@ -16,7 +16,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   final UserService _userService = UserService();
   final AuthService _auth = AuthService();
   
-  List<WorkoutLog> _logs = [];
+  List<WorkoutSession> _logs = []; // Updated type
   bool _isLoading = true;
 
   @override
@@ -27,10 +27,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   Future<void> _fetchLogs() async {
     try {
-      final username = _auth.username;
-      if (username != null) {
-        // Prototype hack: Using username as ID. In real app use ID.
-        final logs = await _userService.getLogs(username);
+      final userId = _auth.userId; 
+      if (userId != null) {
+        final logs = await _userService.getLogs(userId);
         if (mounted) setState(() { _logs = logs; _isLoading = false; });
       } else {
         if (mounted) setState(() => _isLoading = false);
@@ -43,16 +42,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Generate dummy spots if no logs, or real spots from logs (e.g. volume or count)
-    // For prototype, let's just plot number of exercises per workout as a "score"
     List<FlSpot> spots = [];
     for (int i = 0; i < _logs.length && i < 7; i++) {
-        // Reverse order for chart (oldest left)? Actually list is desc.
-        // Let's take last 7 logs.
-        spots.add(FlSpot(i.toDouble(), _logs[i].exercises.length.toDouble())); // simple metric
+        // Plot duration or number of exercises
+        spots.add(FlSpot(i.toDouble(), _logs[i].logs.length.toDouble())); 
     }
     
-    // If empty, show dummy line
     if (spots.isEmpty) {
         spots = [const FlSpot(0, 2), const FlSpot(1, 3), const FlSpot(2, 4), const FlSpot(3, 3)];
     }
@@ -110,22 +105,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
                     child: const Icon(Icons.check, color: Colors.green),
                   ),
-                  title: Text(log.programTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(DateFormat.yMMMd().add_jm().format(log.date)),
-                  trailing: Text("${log.exercises.length} Exercises", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                  // WorkoutSession doesn't store programTitle directly, use ID or "Workout"
+                  title: const Text("Workout Session", style: TextStyle(fontWeight: FontWeight.bold)),
+                  // WorkoutSession doesn't store timestamp directly in Model if not added, assume now or add date field.
+                  // Backend adds timestamps. Update Model to include createdAt if needed. 
+                  // For now, just show abstract info.
+                  subtitle: Text("Duration: ${log.durationMinutes} min"),
+                  trailing: Text("${log.logs.length} Exercises", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
                   onTap: () {
-                    // Show details dialog
                     showDialog(context: context, builder: (_) => AlertDialog(
-                      title: Text(log.programTitle),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: log.exercises.map((e) => Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(e.name),
-                            Text("${e.weight}kg x ${e.reps}"),
-                          ],
-                        )).toList(),
+                      title: const Text("Details"),
+                      content: SizedBox(
+                        width: double.maxFinite,
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: log.logs.map((e) => ListTile(
+                            title: Text(e.name),
+                            subtitle: Text("${e.sets.length} Sets"),
+                          )).toList(),
+                        ),
                       ),
                     ));
                   },

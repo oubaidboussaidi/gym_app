@@ -42,19 +42,7 @@ class UserService {
     }
   }
 
-  Future<void> saveLog(WorkoutLog log) async {
-    final url = Uri.parse("$baseUrl/logs");
-    try {
-      final res = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(log.toJson()),
-      );
-      if (res.statusCode != 201) throw Exception("Failed save log");
-    } catch (e) {
-      throw Exception("Error save log: $e");
-    }
-  }
+  // Legacy saveLog removed. Use WorkoutService.
 
   Future<void> updateProgress(String userId, Map<String, dynamic> progression) async {
     final url = Uri.parse("$baseUrl/users/$userId");

@@ -14,8 +14,8 @@ class CoachDashboard extends StatefulWidget {
 class _CoachDashboardState extends State<CoachDashboard> {
   final AuthService _auth = AuthService();
 
-  void _logout() async {
-    await _auth.logout();
+  void _logout() {
+    _auth.logout();
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,
