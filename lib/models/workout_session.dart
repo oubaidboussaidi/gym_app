@@ -21,6 +21,22 @@ class WorkoutSession {
     this.userRPE,
   });
 
+  factory WorkoutSession.fromJson(Map<String, dynamic> json) {
+    return WorkoutSession(
+      id: json['_id'] ?? json['id'],
+      userId: json['userId'] ?? '',
+      assignmentId: json['assignmentId'],
+      weekNumber: json['weekNumber'],
+      dayNumber: json['dayNumber'],
+      durationMinutes: json['durationMinutes'] ?? 0,
+      logs: (json['logs'] as List<dynamic>?)
+          ?.map((e) => ExerciseLog.fromJson(e))
+          .toList() ?? [],
+      userFeedback: json['userFeedback'],
+      userRPE: json['userRPE'],
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'userId': userId,
@@ -46,6 +62,16 @@ class ExerciseLog {
     required this.sets,
   });
 
+  factory ExerciseLog.fromJson(Map<String, dynamic> json) {
+    return ExerciseLog(
+      exerciseId: json['exerciseId'] ?? '',
+      name: json['name'] ?? 'Unknown Exercise',
+      sets: (json['sets'] as List<dynamic>?)
+          ?.map((e) => SetLog.fromJson(e))
+          .toList() ?? [],
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'exerciseId': exerciseId,
@@ -67,6 +93,15 @@ class SetLog {
     required this.reps,
     required this.rpe,
   });
+
+  factory SetLog.fromJson(Map<String, dynamic> json) {
+    return SetLog(
+      setNumber: json['setNumber'] ?? 0,
+      weight: (json['weight'] as num?)?.toDouble() ?? 0.0,
+      reps: json['reps'] ?? 0,
+      rpe: json['rpe'] ?? 0,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {

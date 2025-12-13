@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/models/user.dart';
-import 'package:gym_app/models/workout_log.dart';
+import 'package:gym_app/models/workout_session.dart';
 import 'package:gym_app/services/user_service.dart';
 
 class AthleteProgressScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class AthleteProgressScreen extends StatefulWidget {
 
 class _AthleteProgressScreenState extends State<AthleteProgressScreen> {
   final UserService _userService = UserService();
-  List<WorkoutLog> _logs = [];
+  List<WorkoutSession> _logs = []; // Updated Type
   bool _isLoading = true;
 
   @override
@@ -48,16 +48,19 @@ class _AthleteProgressScreenState extends State<AthleteProgressScreen> {
                 padding: const EdgeInsets.all(16),
                 itemCount: _logs.length,
                 itemBuilder: (context, index) {
-                  final log = _logs[index];
+                  final log = _logs[index]; // log is WorkoutSession
                   // Basic rendering of a log session
                   return Card(
                     margin: const EdgeInsets.only(bottom: 10),
                     child: ExpansionTile(
-                      title: Text("Workout - ${log.date.toLocal().toString().split(' ')[0]}"),
-                      subtitle: Text("Duration: ${log.durationMinutes} min | RPE: ${log.userRpe}"),
-                      children: log.exercises.map((ex) {
+                      // Workaround: Mock date if ID based or use timestamp if backend sends it. 
+                      // Backend schema has timestamps: true, sends createdAt. 
+                      // For now just show "Workout"
+                      title: Text("Workout (Time: ${log.durationMinutes} min)"),
+                      subtitle: Text("RPE: ${log.userRPE ?? '-'}"),
+                      children: log.logs.map((ex) { // ex is ExerciseLog
                         return ListTile(
-                          title: Text(ex.exerciseName.isNotEmpty ? ex.exerciseName : "Exercise"),
+                          title: Text(ex.name),
                           subtitle: Text("${ex.sets.length} Sets completed"),
                         );
                       }).toList(),

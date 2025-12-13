@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:gym_app/models/program.dart';
-import 'package:gym_app/models/workout_log.dart';
+import 'package:gym_app/models/workout_session.dart';
 import 'package:gym_app/models/user.dart';
 import 'package:gym_app/services/auth.dart';
 
@@ -28,13 +28,13 @@ class UserService {
     }
   }
 
-  Future<List<WorkoutLog>> getLogs(String userId) async {
+  Future<List<WorkoutSession>> getLogs(String userId) async {
     final url = Uri.parse("$baseUrl/logs/$userId");
     try {
       final res = await http.get(url, headers: {"Content-Type": "application/json"});
       if (res.statusCode == 200) {
         final List<dynamic> body = jsonDecode(res.body);
-        return body.map((e) => WorkoutLog.fromJson(e)).toList();
+        return body.map((e) => WorkoutSession.fromJson(e)).toList(); // Requires fromJson in WorkoutSession
       }
       return [];
     } catch (e) {

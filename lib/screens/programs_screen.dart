@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:gym_app/models/program.dart';
-import 'package:gym_app/screens/tracker_screen.dart';
 import 'package:gym_app/services/user_service.dart';
 
 class ProgramsScreen extends StatefulWidget {
@@ -21,12 +19,14 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
   }
 
   void _showProgramDetails(BuildContext context, Program program) {
+    // Legacy view: just showing basic details.
+    // Structure is now complex, so we just show title/desc.
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+        height: MediaQuery.of(context).size.height * 0.5,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -37,39 +37,12 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
           children: [
              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
              const SizedBox(height: 20),
-             Text(program.titre, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.center),
-             Text(program.niveau, style: const TextStyle(fontSize: 16, color: Colors.blueAccent), textAlign: TextAlign.center),
-             
+             Text(program.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.center),
+             Text(program.level, style: const TextStyle(fontSize: 16, color: Colors.blueAccent), textAlign: TextAlign.center),
              const SizedBox(height: 20),
-             Expanded(
-               child: ListView.builder(
-                 itemCount: program.exercices.length,
-                 itemBuilder: (context, index) {
-                   final ex = program.exercices[index];
-                   return ListTile(
-                     leading: CircleAvatar(
-                       backgroundColor: Colors.grey[100],
-                       child: const Icon(Icons.fitness_center, color: Colors.black87, size: 20),
-                     ),
-                     title: Text(ex['nom'] ?? 'Ex', style: const TextStyle(fontWeight: FontWeight.bold)),
-                     subtitle: Text("${ex['séries']} sets x ${ex['reps']} reps"),
-                   );
-                 },
-               ),
-             ),
-             
-             ElevatedButton(
-               onPressed: () {
-                 Navigator.pop(context); // Close modal
-                 Navigator.push(context, MaterialPageRoute(builder: (_) => TrackerScreen(program: program)));
-               },
-               style: ElevatedButton.styleFrom(
-                 backgroundColor: Colors.black87,
-                 padding: const EdgeInsets.symmetric(vertical: 16),
-                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-               ),
-               child: const Text("START WORKOUT", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-             )
+             Text(program.description, style: const TextStyle(fontSize: 14)),
+             const Spacer(),
+             const Text("To start this program, ask your coach to assign it to you!", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey))
           ],
         ),
       ),
@@ -81,7 +54,7 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text("Programs", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+        title: const Text("All Programs", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
@@ -122,9 +95,9 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
                         child: const Icon(Icons.flash_on, color: Colors.orange, size: 32),
                       ),
                       const SizedBox(height: 16),
-                      Text(program.titre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), textAlign: TextAlign.center),
+                      Text(program.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), textAlign: TextAlign.center),
                       const SizedBox(height: 4),
-                      Text(program.niveau, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(program.level, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                 ),
